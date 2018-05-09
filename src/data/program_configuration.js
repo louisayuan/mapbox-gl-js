@@ -846,8 +846,10 @@ function paintAttributeName(property, type) {
         'icon-halo-width': ['halo_width'],
         'line-gap-width': ['gapwidth'],
         'line-pattern': ['pattern_to', 'pattern_from'],
-        'fill-pattern': ['pattern_to', 'pattern_from']
+        'fill-pattern': ['pattern_to', 'pattern_from'],
+        'fill-extrusion-pattern': ['pattern_to', 'pattern_from'],
     };
+
     return attributeNameExceptions[property] ||
         [property.replace(`${type}-`, '').replace(/-/g, '_')];
 }
@@ -859,6 +861,10 @@ function getLayoutException(property) {
             'composite': PatternLayoutArray
         },
         'fill-pattern': {
+            'source': PatternLayoutArray,
+            'composite': PatternLayoutArray
+        },
+        'fill-extrusion-pattern':{
             'source': PatternLayoutArray,
             'composite': PatternLayoutArray
         }
