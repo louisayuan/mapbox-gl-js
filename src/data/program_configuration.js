@@ -406,6 +406,7 @@ class CrossFadedCompositeBinder<T> implements Binder<T> {
     useIntegerZoom: boolean;
     zoom: number;
     maxValue: number;
+    layerId: string;
 
     zoomInPaintVertexArray: StructArray;
     zoomOutPaintVertexArray: StructArray;
@@ -413,7 +414,7 @@ class CrossFadedCompositeBinder<T> implements Binder<T> {
     zoomOutPaintVertexBuffer: ?VertexBuffer;
     paintVertexAttributes: Array<StructArrayMember>;
 
-    constructor(expression: CompositeExpression, names: Array<string>, type: string, useIntegerZoom: boolean, zoom: number, PaintVertexArray: Class<StructArray>) {
+    constructor(expression: CompositeExpression, names: Array<string>, type: string, useIntegerZoom: boolean, zoom: number, PaintVertexArray: Class<StructArray>, layerId: string) {
 
         this.expression = expression;
         this.names = names;
@@ -422,6 +423,7 @@ class CrossFadedCompositeBinder<T> implements Binder<T> {
         this.useIntegerZoom = useIntegerZoom;
         this.zoom = zoom;
         this.maxValue = -Infinity;
+        this.layerId = layerId;
 
         this.paintVertexAttributes = names.map((name) =>
             ({
@@ -449,17 +451,15 @@ class CrossFadedCompositeBinder<T> implements Binder<T> {
 
         const zoomInArray = this.zoomInPaintVertexArray;
         const zoomOutArray = this.zoomOutPaintVertexArray;
-
+        const { layerId } = this;
         const start = zoomInArray.length;
 
         zoomInArray.reserve(length);
         zoomOutArray.reserve(length);
 
-        const min = this.expression.evaluate({zoom: this.zoom - 1}, feature);
-        const mid = this.expression.evaluate({zoom: this.zoom }, feature);
-        const max = this.expression.evaluate({zoom: this.zoom + 1}, feature);
+        if (imagePositions && feature.patterns && feature.patterns[layerId]) {
+            const { min, mid, max } = feature.patterns[layerId];
 
-        if (imagePositions) {
             const imageMin = imagePositions[min];
             const imageMid = imagePositions[mid];
             const imageMax = imagePositions[max];
@@ -487,12 +487,10 @@ class CrossFadedCompositeBinder<T> implements Binder<T> {
 
         const zoomInArray = this.zoomInPaintVertexArray;
         const zoomOutArray = this.zoomOutPaintVertexArray;
+        const { layerId } = this;
 
-        const min = this.expression.evaluate({zoom: this.zoom - 1}, feature, featureState);
-        const mid = this.expression.evaluate({zoom: this.zoom }, feature, featureState);
-        const max = this.expression.evaluate({zoom: this.zoom + 1}, feature, featureState);
-
-        if (imagePositions) {
+        if (imagePositions && feature.patterns && feature.patterns[layerId]) {
+            const {min, mid, max} = feature.patterns[layerId];
             const imageMin = imagePositions[min];
             const imageMid = imagePositions[mid];
             const imageMax = imagePositions[max];
@@ -594,7 +592,7 @@ export default class ProgramConfiguration {
                     keys.push(`/u_${property}`);
                 } else {
                     const StructArrayLayout = layoutType(property, type, 'source');
-                    self.binders[property] = new CrossFadedCompositeBinder(value.value, names, type, useIntegerZoom, zoom, StructArrayLayout);
+                    self.binders[property] = new CrossFadedCompositeBinder(value.value, names, type, useIntegerZoom, zoom, StructArrayLayout, layer.id);
                     keys.push(`/a_${property}`);
                 }
             } else if (value.value.kind === 'constant') {
